@@ -1,0 +1,14 @@
+directive\ArticlePageExDirective$TemplatePaginateDirective.class
+commonapi\model\ThumbUpUser.class
+commonapi\CommonApiAddon.class
+commonapi\model\base\ThumbUpBase.class
+commonapi\model\base\ThumbUpUserBase.class
+commonapi\CommonApiAddonController.class
+directive\ArticlePageExDirective.class
+common\installPlugin\PluginInstall.class
+commonapi\CommonApiAddonHandler.class
+commonapi\CommonApiUpgrader.class
+commonapi\CommonApiAddonInterceptor.class
+controller\ArticleExController.class
+directive\ArticlesExDirective.class
+commonapi\model\ThumbUp.class
