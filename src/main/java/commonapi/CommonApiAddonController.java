@@ -3,23 +3,24 @@ package commonapi;
 import com.alibaba.fastjson.JSONObject;
 import com.github.houbb.heaven.util.util.CollectionUtil;
 import com.jfinal.core.ActionKey;
-import com.jfinal.kit.Ret;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import commonapi.model.ThumbUp;
-import io.jboot.web.controller.JbootController;
 import io.jboot.web.controller.annotation.RequestMapping;
 import io.jpress.JPressConsts;
 import io.jpress.core.menu.annotation.AdminMenu;
+import io.jpress.web.base.TemplateControllerBase;
 
-import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 
 @RequestMapping(value = "/admin/addon/commonapi",viewPath = "/")
-public class CommonApiAddonController extends JbootController {
+public class CommonApiAddonController extends TemplateControllerBase {
 
     @ActionKey("/admin/addon/commonapi/index")
     @AdminMenu(groupId = JPressConsts.SYSTEM_MENU_ADDON, text = "功能增强")

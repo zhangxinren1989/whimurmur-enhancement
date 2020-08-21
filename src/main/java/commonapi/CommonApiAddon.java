@@ -1,15 +1,8 @@
 package commonapi;
 
-import com.jfinal.config.JFinalConfig;
 import com.jfinal.plugin.activerecord.Db;
-import io.jboot.aop.jfinal.JfinalHandlers;
-import io.jboot.app.config.JbootConfigManager;
-import io.jboot.web.handler.JbootActionHandler;
 import io.jpress.core.addon.Addon;
 import io.jpress.core.addon.AddonInfo;
-import io.jpress.core.menu.MenuItem;
-import io.jpress.core.menu.MenuManager;
-import io.jpress.core.menu.annotation.AdminMenu;
 
 /**
  * 这是一个 JPress 插件的 hello world 项目，没有具体的功能。
@@ -53,6 +46,15 @@ public class CommonApiAddon implements Addon {
         Db.update(createSql);
         Db.update(createSql2);
 
+        // whimurmur v1.5.3，将option中calmlog_ex改为whimurmur
+        String version = addonInfo.getVersion();
+        if("1.5.3".equals(version)){
+            String optionUpdate = "update `option` set `key` = concat('whimurmur', substr(`key`, 11))"
+                    + "where `key` like '%calmlog_ex%' ";
+            Db.update(optionUpdate);
+            Db.update("update `option` set `key` = 'whimurmur_article_tag_cloud' where `key` = 'whimurmur_article-tag-cloud'");
+            Db.update("update `option` set `key` = 'whimurmur_product_tag_cloud' where `key` = 'whimurmur_product-tag-cloud'");
+        }
     }
 
     @Override
