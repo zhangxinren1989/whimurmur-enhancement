@@ -1,8 +1,16 @@
 package commonapi;
 
+import com.jfinal.aop.Aop;
 import com.jfinal.plugin.activerecord.Db;
+import io.jpress.JPressOptions;
 import io.jpress.core.addon.Addon;
 import io.jpress.core.addon.AddonInfo;
+import io.jpress.core.template.Template;
+import io.jpress.core.template.TemplateManager;
+import io.jpress.model.Option;
+import io.jpress.service.OptionService;
+
+import java.util.List;
 
 /**
  * 这是一个 JPress 插件的 hello world 项目，没有具体的功能。
@@ -47,13 +55,64 @@ public class CommonApiAddon implements Addon {
         Db.update(createSql2);
 
         // whimurmur v1.5.3，将option中calmlog_ex改为whimurmur
-        String version = addonInfo.getVersion();
-        if("1.5.3".equals(version)){
-            String optionUpdate = "update `option` set `key` = concat('whimurmur', substr(`key`, 11))"
-                    + "where `key` like '%calmlog_ex%' ";
-            Db.update(optionUpdate);
-            Db.update("update `option` set `key` = 'whimurmur_article_tag_cloud' where `key` = 'whimurmur_article-tag-cloud'");
-            Db.update("update `option` set `key` = 'whimurmur_product_tag_cloud' where `key` = 'whimurmur_product-tag-cloud'");
+        Template currentTemplate = TemplateManager.me().getCurrentTemplate();
+        String title = currentTemplate.getTitle();
+        int versionCode = currentTemplate.getVersionCode();
+        if("whimurmur".equals(title) && versionCode >= 10503){
+            System.out.println("option update...");
+            try {
+                // 先查出同时存在calmlog_ex和whimurmur前缀的相同设置
+                List<String> keys = Db.query("select o1.`key` " +
+                        "from `option` o1, `option` o2 " +
+                        "where o1.`key` like 'calmlog_ex%' and o2.`key` like 'whimurmur%' and SUBSTR(o1.`key`,11) = SUBSTR(o2.`key`, 10)");
+                // 删除calmlog_ex前缀的设置，防止下面更新失败
+                if(null != keys && keys.size() > 0){
+                    for(String key: keys){
+                        Db.update("delete from `option` where `key` = ?", key);
+                    }
+
+                }
+
+            }catch (Exception e){
+                System.out.println("option calmlog_ex delete fail..." + e.getMessage());
+            }
+
+            String optionUpdate = "update `option` set `key` = concat('whimurmur', substr(`key`, 11)) "
+                    + "where `key` like 'calmlog_ex%' ";
+            try {
+                // 更新calmlog_ex前缀为whimurmur前缀
+                Db.update(optionUpdate);
+            }catch (Exception e){
+                System.out.println("option calmlog_ex update fail..." + e.getMessage());
+            }
+
+            // 额外把-改为_
+            try {
+                Db.update("update `option` set `key` = 'whimurmur_article_tag_cloud' where `key` = 'whimurmur_article-tag-cloud'");
+            }catch (Exception e){
+                System.out.println("option whimurmur_article-tag-cloud update fail..." + e.getMessage());
+            }
+
+            try {
+                Db.update("update `option` set `key` = 'whimurmur_product_tag_cloud' where `key` = 'whimurmur_product-tag-cloud'");
+            }catch (Exception e){
+                System.out.println("option whimurmur_product-tag-cloud update fail..." + e.getMessage());
+            }
+
+            // 额外把whimurmur_index_top_ad改为whimurmur_page_top_ad
+            try {
+                Db.update("update `option` set `key` = 'whimurmur_page_top_ad' where `key` = 'whimurmur_index_top_ad'");
+            }catch (Exception e){
+                System.out.println("option whimurmur_index_top_ad update fail..." + e.getMessage());
+            }
+
+            // 重新更新内存中的option
+            OptionService service = Aop.get(OptionService.class);
+            List<Option> options = service.findAll();
+            for (Option option : options) {
+                //整个网站的后台配置不超过100个，再未来最多也100多个，所以全部放在内存毫无压力
+                JPressOptions.set(option.getKey(), option.getValue());
+            }
         }
     }
 
