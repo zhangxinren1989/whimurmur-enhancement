@@ -1,7 +1,6 @@
 package common.installPlugin;
 
 import com.jfinal.log.Log;
-import io.jboot.aop.annotation.Bean;
 import io.jpress.core.template.Template;
 import io.jpress.core.template.TemplateManager;
 
@@ -20,10 +19,12 @@ import java.util.List;
  */
 public class PluginInstall {
 
+    private PluginInstall(){}
+
     private static Log log = Log.getLog(PluginInstall.class);
 
     // 根据文件名检测插件文件有没有被安装
-    public boolean checkPlugin(String checkFile) {
+    public static boolean checkPlugin(String checkFile) {
         Template curTemplate = TemplateManager.me().getCurrentTemplate();
         File templateDir = curTemplate.getAbsolutePathFile();
 
@@ -40,7 +41,7 @@ public class PluginInstall {
     }
 
     // 包括插件目录和资源目录
-    public int applyPlugin(String resourcePath) {
+    public static int applyPlugin(String resourcePath) {
         Template curTemplate = TemplateManager.me().getCurrentTemplate();
         File templateDir = curTemplate.getAbsolutePathFile();
         File parentFile = templateDir.getParentFile();
@@ -63,7 +64,7 @@ public class PluginInstall {
         return failCount;
     }
 
-    public void removePlugin(List<String> files) {
+    public static void removePlugin(List<String> files) {
         Template curTemplate = TemplateManager.me().getCurrentTemplate();
         File templateDir = curTemplate.getAbsolutePathFile();
 
@@ -71,7 +72,7 @@ public class PluginInstall {
         curTemplate.refresh();
     }
 
-    private int applyPlugin(File file, String parentPath){
+    private static int applyPlugin(File file, String parentPath){
         int res = 0;
         Template curTemplate = TemplateManager.me().getCurrentTemplate();
         File templateDir = curTemplate.getAbsolutePathFile();
@@ -83,6 +84,13 @@ public class PluginInstall {
         }else{
             File temp = new File(templateDir + parentPath, file.getName());
             try {
+                //判断父目录是否存在，如果不存在，则创建
+                if (temp.getParentFile() != null && !temp.getParentFile().exists()) {
+                    temp.getParentFile().mkdirs();
+                }
+                if(!temp.exists()){
+                    temp.createNewFile();
+                }
                 Files.copy(file.toPath(), temp.toPath(), StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException e) {
                 res--;
@@ -94,7 +102,7 @@ public class PluginInstall {
     }
 
     // 从模板中找插件文件并删除
-    private void deleteFiles(File file, List<String> deletes) {
+    private static void deleteFiles(File file, List<String> deletes) {
         boolean deleted = false;
         for(String del: deletes) {
             if(file.getName().equals(del)) {
@@ -115,7 +123,7 @@ public class PluginInstall {
     }
 
     // 删除插件文件夹
-    private void deletePlugin(File dir) {
+    private static void deletePlugin(File dir) {
         if(dir.isDirectory()) {
             for(File f: dir.listFiles()) {
                 if(f.isFile()) {

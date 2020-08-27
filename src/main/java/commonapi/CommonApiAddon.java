@@ -1,6 +1,7 @@
 package commonapi;
 
 import com.jfinal.aop.Aop;
+import com.jfinal.core.JFinal;
 import com.jfinal.plugin.activerecord.Db;
 import io.jpress.JPressOptions;
 import io.jpress.core.addon.Addon;
@@ -10,6 +11,10 @@ import io.jpress.core.template.TemplateManager;
 import io.jpress.model.Option;
 import io.jpress.service.OptionService;
 
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -18,11 +23,11 @@ import java.util.List;
  * 其存在的目的是为了帮助开发者，通过 hello world ，了解如何开发一个 JPress 插件
  *
  */
-public class CommonApiAddon implements Addon {
+public class CommonApiAddon implements Addon{
 
     @Override
     public void onInstall(AddonInfo addonInfo) {
-
+        System.out.println("CommonApiAddon update...");
         /**
          * 在 onInstall ，我们一般需要 创建自己的数据表
          *
@@ -114,6 +119,87 @@ public class CommonApiAddon implements Addon {
                 JPressOptions.set(option.getKey(), option.getValue());
             }
         }
+
+        // ckeditor增强
+        File htmls = new File(JFinal.me().getServletContext().getRealPath("") + File.separator + "WEB-INF/views");
+        List<File> articleWriteHtmls = new ArrayList<>();
+        articleWriteHtml(articleWriteHtmls, htmls);
+
+        System.out.println("ckeditor update...");
+        if(articleWriteHtmls.size() > 0){
+
+            for(File html: articleWriteHtmls){
+                BufferedWriter writer = null;
+                BufferedReader reader = null;
+                try{
+                    File temp = new File(html.getParent(), "article_write_temp.html");
+                    if(temp.exists()){
+                        temp.delete();
+                    }
+                    temp.createNewFile();
+                    reader = new BufferedReader(new FileReader(html));
+                    writer = new BufferedWriter(new FileWriter(temp));
+
+                    String line;
+                    while ((line = reader.readLine()) != null){
+                        if(line.indexOf("ckeditor-enhancement.js") > -1
+                                || line.indexOf("ckeditor.js") > -1){
+                            continue;
+                        }
+
+                        if(line.indexOf("#define script()") > -1){
+                            writer.write(line);
+                            writer.newLine();
+                            writer.write("<script src='#(T_PATH)/js/plugin/ckeditor/ckeditor.js'></script>");
+                            writer.newLine();
+                            writer.write("<script src='#(T_PATH)/js/plugin/ckeditor/ckeditor-enhancement.js'></script>");
+                        }else if(line.indexOf("initEditor") > -1){
+                            writer.write("initWhimurmurEditor('editor1', 467, editMode);");
+                        }else{
+                            writer.write(line);
+                        }
+                        writer.newLine();
+                    }
+
+                    writer.flush();
+                    writer.close();
+                    reader.close();
+                    Files.copy(temp.toPath(), html.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    temp.delete();
+
+                }catch (IOException e){
+                    e.printStackTrace();
+                }finally {
+                    if(writer != null){
+                        try {
+                            writer.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if(writer != null){
+                        try {
+                            writer.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+
+    private void articleWriteHtml(List<File> articleWriteHtmls, File dir){
+        if(dir.exists() && dir.isDirectory()){
+            for(File f: dir.listFiles()){
+                if(f.isDirectory()){
+                    articleWriteHtml(articleWriteHtmls, f);
+                }else if(f.isFile() && f.getName().equals("article_write.html")){
+                    articleWriteHtmls.add(f);
+                }
+            }
+        }
     }
 
     @Override
@@ -123,7 +209,7 @@ public class CommonApiAddon implements Addon {
          *  在 onUninstall 中，我们一般需要去删除自己在 onInstall 中创建的表 或者 其他资源文件
          *  这个方法是用户在 Jpress 后台卸载插件的时候回触发。
          */
-//        System.out.println("CommonApiAddon onUninstall");
+        System.out.println("CommonApiAddon onUninstall");
     }
 
     @Override
